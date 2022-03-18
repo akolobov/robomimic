@@ -84,9 +84,13 @@ class EnvRobosuite(EB.EnvBase):
 
         if self._is_v1:
             # Make sure joint position observations and eef vel observations are active
+            # TODO: decide if we need this. Not clear why we do, since we know joint_pos_cos and joint_pos_sin
+            """
             for ob_name in self.env.observation_names:
                 if ("joint_pos" in ob_name) or ("eef_vel" in ob_name):
                     self.env.modify_observable(observable_name=ob_name, attribute="active", modifier=True)
+            """
+            pass
 
     def step(self, action):
         """
@@ -195,7 +199,7 @@ class EnvRobosuite(EB.EnvBase):
                 # ensures that we don't accidentally add robot wrist images a second time
                 pf = robot.robot_model.naming_prefix
                 for k in di:
-                    if k.startswith(pf) and (k not in ret) and (not k.endswith("proprio-state")):
+                    if k.startswith(pf) and (k not in ret): # and (not k.endswith("proprio-state")):
                         ret[k] = np.array(di[k])
         else:
             # minimal proprioception for older versions of robosuite
