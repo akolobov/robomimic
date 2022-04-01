@@ -59,8 +59,7 @@ class EnvRobosuite(EB.EnvBase):
             has_offscreen_renderer=(render_offscreen or use_image_obs),
             ignore_done=True,
             use_object_obs=True,
-            use_camera_obs=use_image_obs,
-            camera_depths=False,
+            use_camera_obs=use_image_obs
         )
         kwargs.update(update_kwargs)
 
@@ -75,8 +74,9 @@ class EnvRobosuite(EB.EnvBase):
         else:
             # make sure gripper visualization is turned off (we almost always want this for learning)
             kwargs["gripper_visualization"] = False
+            # rename kwarg
+            kwargs["camera_depth"] = kwargs["camera_depths"][0]
             del kwargs["camera_depths"]
-            kwargs["camera_depth"] = False # rename kwarg
 
         self._env_name = env_name
         self._init_kwargs = deepcopy(kwargs)
@@ -185,7 +185,7 @@ class EnvRobosuite(EB.EnvBase):
             di = self.env._get_observations(force_update=True) if self._is_v1 else self.env._get_observation()
         ret = {}
         for k in di:
-            if (k in ObsUtils.OBS_KEYS_TO_MODALITIES) and ObsUtils.key_is_obs_modality(key=k, obs_modality="rgb"):
+            if (k in ObsUtils.OBS_KEYS_TO_MODALITIES) and (ObsUtils.key_is_obs_modality(key=k, obs_modality="rgb") or ObsUtils.key_is_obs_modality(key=k, obs_modality="depth")):
                 ret[k] = di[k][::-1]
                 if self.postprocess_visual_obs:
                     ret[k] = ObsUtils.process_obs(obs=ret[k], obs_key=k)
@@ -332,6 +332,7 @@ class EnvRobosuite(EB.EnvBase):
         image_modalities = list(camera_names)
         if is_v1:
             image_modalities = ["{}_image".format(cn) for cn in camera_names]
+            depth_modalities = ["{}_depth".format(cn) for cn in camera_names]
         elif has_camera:
             # v0.3 only had support for one image, and it was named "rgb"
             assert len(image_modalities) == 1
@@ -340,6 +341,7 @@ class EnvRobosuite(EB.EnvBase):
             "obs": {
                 "low_dim": [], # technically unused, so we don't have to specify all of them
                 "rgb": image_modalities,
+                "depth": depth_modalities
             }
         }
         ObsUtils.initialize_obs_utils_with_obs_specs(obs_modality_specs)

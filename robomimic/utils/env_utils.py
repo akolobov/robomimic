@@ -194,7 +194,8 @@ def create_env_from_metadata(
 
 def create_env_for_data_processing(
     env_meta,
-    camera_names, 
+    camera_names,
+    camera_depths,
     camera_height, 
     camera_width, 
     reward_shaping,
@@ -228,13 +229,15 @@ def create_env_for_data_processing(
     env_kwargs = deepcopy(env_kwargs)
     env_kwargs.pop("env_name", None)
     env_kwargs.pop("camera_names", None)
+    env_kwargs.pop("camera_depths", None)
     env_kwargs.pop("camera_height", None)
     env_kwargs.pop("camera_width", None)
     env_kwargs.pop("reward_shaping", None)
 
     return env_class.create_for_data_processing(
         env_name=env_name, 
-        camera_names=camera_names, 
+        camera_names=camera_names,
+        camera_depths=camera_depths,
         camera_height=camera_height, 
         camera_width=camera_width, 
         reward_shaping=reward_shaping, 

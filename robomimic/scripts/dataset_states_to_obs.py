@@ -81,7 +81,8 @@ def extract_trajectory(
         obs=[], 
         next_obs=[], 
         rewards=[], 
-        dones=[], 
+        dones=[],
+        successes=[],
         actions=np.array(actions), 
         states=np.array(states), 
         initial_state_dict=initial_state,
@@ -102,6 +103,7 @@ def extract_trajectory(
         # note: our tasks use reward r(s'), reward AFTER transition, so this is
         #       the reward for the current timestep
         r = env.get_reward()
+        success = env.is_success()["task"]
 
         # infer done signal
         done = False
@@ -118,6 +120,7 @@ def extract_trajectory(
         traj["next_obs"].append(next_obs)
         traj["rewards"].append(r)
         traj["dones"].append(done)
+        traj["successes"].append(success)
 
         # update for next iter
         obs = deepcopy(next_obs)
@@ -145,6 +148,7 @@ def dataset_states_to_obs(args):
     env = EnvUtils.create_env_for_data_processing(
         env_meta=env_meta,
         camera_names=args.camera_names, 
+        camera_depths=[args.include_depth]*len(args.camera_names),
         camera_height=args.camera_height, 
         camera_width=args.camera_width, 
         reward_shaping=args.shaped,
@@ -209,9 +213,11 @@ def dataset_states_to_obs(args):
         ep_data_grp.create_dataset("states", data=np.array(traj["states"]))
         ep_data_grp.create_dataset("rewards", data=np.array(traj["rewards"]))
         ep_data_grp.create_dataset("dones", data=np.array(traj["dones"]))
+        ep_data_grp.create_dataset("successes", data=np.array(traj["successes"]))
         for k in traj["obs"]:
             ep_data_grp.create_dataset("obs/{}".format(k), data=np.array(traj["obs"][k]))
-            ep_data_grp.create_dataset("next_obs/{}".format(k), data=np.array(traj["next_obs"][k]))
+            # TODO: check if we really need the next-state data. It's redundant but doubles the data file size. 
+            #ep_data_grp.create_dataset("next_obs/{}".format(k), data=np.array(traj["next_obs"][k]))
 
         # episode metadata
         if is_robosuite_env:
@@ -273,6 +279,13 @@ if __name__ == "__main__":
         nargs='+',
         default=[],
         help="(optional) camera name(s) to use for image observations. Leave out to not use image observations.",
+    )
+
+    # flag for camera depth
+    parser.add_argument(
+        "--include_depth", 
+        action='store_true',
+        help="(optional) generate depth images from all cameras",
     )
 
     parser.add_argument(
