@@ -148,7 +148,7 @@ def dataset_states_to_obs(args):
     env = EnvUtils.create_env_for_data_processing(
         env_meta=env_meta,
         camera_names=args.camera_names, 
-        camera_depths=[args.include_depth]*len(args.camera_names),
+        camera_depths=args.include_depth,
         camera_height=args.camera_height, 
         camera_width=args.camera_width, 
         reward_shaping=args.shaped,
@@ -186,7 +186,14 @@ def dataset_states_to_obs(args):
         states = f["data/{}/states".format(ep)][()]
         initial_state = dict(states=states[0])
         if is_robosuite_env:
-            initial_state["model"] = f["data/{}".format(ep)].attrs["model_file"]
+            """
+            We overwrite the task model stored in the demonstration data file with model used by the current task simulator. We do this to avoid errors caused by the 
+            data file's and current model possibly having different structure.
+
+            ASSUMPTION: the data file's model behaves the same way as current model along the trajectories in the data file and compile to the same state and action space.
+            """
+            initial_state["model"] = env.env.sim.model.get_xml() # f["data/{}".format(ep)].attrs["model_file"]
+
 
         # extract obs, rewards, dones
         actions = f["data/{}/actions".format(ep)][()]
@@ -285,6 +292,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--include_depth", 
         action='store_true',
+        default=False,
         help="(optional) generate depth images from all cameras",
     )
 

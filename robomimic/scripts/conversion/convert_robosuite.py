@@ -38,11 +38,17 @@ if __name__ == "__main__":
     # store env meta
     env_name = f["data"].attrs["env"]
     env_info = json.loads(f["data"].attrs["env_info"])
+
+    # ASSUMPTION: if the controller frequency info is missing, assume it's the default value, 20.
+    if "control_freq" not in env_info:
+        env_info["control_freq"] = 20
+
     env_meta = dict(
         type=EB.EnvType.ROBOSUITE_TYPE,
         env_name=env_name,
         env_kwargs=env_info,
     )
+
     if "env_args" in f["data"].attrs:
         del f["data"].attrs["env_args"]
     f["data"].attrs["env_args"] = json.dumps(env_meta, indent=4)
