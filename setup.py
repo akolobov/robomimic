@@ -28,6 +28,7 @@ setup(
         "egl_probe>=1.0.1",
         "torch",
         "torchvision",
+        "lxml"
     ],
     eager_resources=['*'],
     include_package_data=True,
